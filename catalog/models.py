@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.auth.models import User
+from datetime import date
 
 # Create your models here.
 
@@ -38,7 +40,7 @@ class Book(models.Model):
     def display_genre(self):
         """Create a string for the Genre. This is required to display genre in Admin."""
         return ', '.join(genre.name for genre in self.genre.all()[:3])
-    
+
     display_genre.short_description = 'Genre'
 
 import uuid # Required for unique book instances
@@ -47,8 +49,15 @@ class BookInstance(models.Model):
     """Model representing a specific copy of a book (i.e. that can be borrowed from the library)."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, help_text='Unique ID for this particular book across whole library')
     book = models.ForeignKey('Book', on_delete=models.SET_NULL, null=True) 
+    borrower = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     imprint = models.CharField(max_length=200)
     due_back = models.DateField(null=True, blank=True)
+
+    @property
+    def is_overdue(self):
+        if self.due_back and date.today() > self.due_back:
+            return True
+        return False
 
     LOAN_STATUS = (
         ('m', 'Maintenance'),
@@ -81,7 +90,7 @@ class Author(models.Model):
 
     class Meta:
         ordering = ['last_name', 'first_name']
-    
+        permissions = (("can_mark_returned", "Set book as returned"),)
     def get_absolute_url(self):
         """Returns the url to access a particular author instance."""
         return reverse('author-detail', args=[str(self.id)])
