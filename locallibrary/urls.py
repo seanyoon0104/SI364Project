@@ -33,6 +33,7 @@ urlpatterns += [
 	path('', RedirectView.as_view(url='/catalog/', permanent=True)),
 ]
 
+
 #Add Django site authentication urls (for login, logout, password management)
 #from django.urls import include
 urlpatterns += [
